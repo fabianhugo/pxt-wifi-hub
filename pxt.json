@@ -1,0 +1,27 @@
+{
+    "name": "pxt-wifi-hub",
+    "version": "0.1.0",
+    "description": "A Calliope mini opens its own WiFi network; other minis join it and send values to a live dashboard.",
+    "license": "MIT",
+    "dependencies": {
+        "core": "*",
+        "datalogger": "*",
+        "v3": "*"
+    },
+    "files": [
+        "hub.ts",
+        "README.md",
+        "_locales/de/pxt-wifi-hub-strings.json",
+        "_locales/de/pxt-wifi-hub-jsdoc-strings.json"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "supportedTargets": [
+        "calliopemini"
+    ],
+    "preferredEditor": "tsprj",
+    "testDependencies": {
+        "extra-serial": "github:calliope-edu/pxt-extra-serial#v1.4.1"
+    }
+}

@@ -1,0 +1,5 @@
+built/
+pxt_modules/
+node_modules/
+.pxt/
+projects/
