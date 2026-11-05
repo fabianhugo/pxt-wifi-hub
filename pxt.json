@@ -5,8 +5,7 @@
     "license": "MIT",
     "dependencies": {
         "core": "*",
-        "datalogger": "*",
-        "v3": "*"
+        "datalogger": "*"
     },
     "files": [
         "hub.ts",
@@ -17,11 +16,12 @@
     "testFiles": [
         "test.ts"
     ],
+    "testDependencies": {
+        "extra-serial": "github:calliope-edu/pxt-extra-serial#v1.4.1",
+        "v3": "*"
+    },
     "supportedTargets": [
         "calliopemini"
     ],
-    "preferredEditor": "tsprj",
-    "testDependencies": {
-        "extra-serial": "github:calliope-edu/pxt-extra-serial#v1.4.1"
-    }
+    "preferredEditor": "tsprj"
 }

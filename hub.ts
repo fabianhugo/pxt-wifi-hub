@@ -21,7 +21,7 @@
  * added later.
  *
  * NODE PROGRAM (each other board)
- *   wifiHub.joinHub("CalliopeHub", "", "pipig")
+ *   wifiHub.joinHub("CalliopeHub", "")   // shows up as its device name
  *   basic.forever(function () {
  *       wifiHub.sendValues(
  *           datalogger.createCV("temp", input.temperature()),
@@ -140,9 +140,11 @@ namespace wifiHub {
     let joined = false
     let hubHost = AP_IP
     let pushStage = 0
-    // The hub mini's own row name, for logHubValues. See setHubName.
-    let hubName = "hub"
-    // Set by joinHub; every sendValues push carries it.
+    // The hub mini's own row name, for logHubValues. Empty means the
+    // default, "<device name> (hub)". See setHubName.
+    let hubName = ""
+    // Set by joinHub to this mini's device name; every sendValues push
+    // carries it.
     let myNodeName = ""
     let lastRejoin = 0
 
@@ -411,7 +413,7 @@ namespace wifiHub {
 
     /**
      * Name the hub mini's own row on the dashboard and in the log
-     * (default "hub"). Use it if a node already uses that name.
+     * (default: the mini's device name with " (hub)", e.g. "zutip (hub)").
      */
     //% block="set hub name %name"
     //% name.defl="hub"
@@ -424,7 +426,8 @@ namespace wifiHub {
 
     /**
      * Log the hub mini's own values. They show up on the page like a node's,
-     * under the hub name ("hub" unless changed with "set hub name"), and go
+     * under the hub name ("<device name> (hub)" unless changed with
+     * "set hub name"), and go
      * into the flash log with the nodes' rows. Use the same names as the
      * nodes, so they share a chart.
      */
@@ -446,7 +449,7 @@ namespace wifiHub {
             if (readings.length > 0) readings += ","
             readings += cvs[i].column + "=" + cvs[i].value
         }
-        record(hubName.length > 0 ? hubName : "hub", readings, cvs)
+        record(hubName.length > 0 ? hubName : control.deviceName() + " (hub)", readings, cvs)
     }
 
     /**
@@ -516,22 +519,19 @@ namespace wifiHub {
 
     /**
      * Join the hub's WiFi network (station mode). Use the same name and
-     * password given to "start hub". "node name" is how this mini appears
-     * on the dashboard; give each mini its own. Check "joined hub?"
-     * afterwards.
+     * password given to "start hub". The mini appears on the dashboard
+     * under its own device name. Check "joined hub?" afterwards.
      */
-    //% block="join hub|network name %name|password %pass|node name %nodeName||TX %tx|RX %rx"
+    //% block="join hub|network name %name|password %pass||TX %tx|RX %rx"
     //% tx.defl=SerialPin.C17
     //% rx.defl=SerialPin.C16
     //% name.defl="CalliopeHub"
-    //% nodeName.defl="Knoten 1"
     //% expandableArgumentMode="toggle"
     //% group="Node"
     //% weight=70
-    export function joinHub(name: string, pass: string, nodeName: string, tx?: SerialPin, rx?: SerialPin): void {
-        // An empty name would make the hub drop every push (record() needs
-        // one), so fall back to the mini's own five-letter device name.
-        myNodeName = nodeName && nodeName.length > 0 ? nodeName : control.deviceName()
+    export function joinHub(name: string, pass: string, tx?: SerialPin, rx?: SerialPin): void {
+        // Every mini is shown under its own five-letter device name.
+        myNodeName = control.deviceName()
         setPins(tx, rx)
         ssid = name
         passwd = pass
@@ -583,8 +583,8 @@ namespace wifiHub {
     }
 
     /**
-     * Send this mini's current values to the hub, under the node name given
-     * to "join hub". Values replace whatever was sent before, so the page
+     * Send this mini's current values to the hub, under its device name.
+     * Values replace whatever was sent before, so the page
      * always shows the latest. "last send status" tells whether it arrived.
      */
     //% block="send values $d1||$d2 $d3 $d4 $d5"
@@ -657,7 +657,7 @@ namespace wifiHub {
         if (lastRejoin != 0 && (input.runningTime() - lastRejoin) < REJOIN_MS) return
         note("node: link lost, rejoining " + ssid)
         setupAnim = false
-        joinHub(ssid, passwd, myNodeName, txPin, rxPin)
+        joinHub(ssid, passwd, txPin, rxPin)
         setupAnim = true
         lastRejoin = input.runningTime()
     }
@@ -1119,20 +1119,52 @@ namespace wifiHub {
                 // GET /favicon.ico, and on this single-fibre server every extra
                 // request is another full connect/serve/close cycle.
                 "<link rel=\"icon\" href=\"data:,\">",
-                "<title>Calliope mini Hub Dashboard</title><style>",
-                "body{font-family:\"Roboto\",\"Helvetica Now\",Helvetica,Arial,sans-serif;margin:0;color:#222}",
-                ".header-strip{height:10px;background:#bbef53}",
-                ".header-contents{padding:0 1em}",
-                "h1{display:block;font-size:2em;margin:.67em 0;font-weight:bold;unicode-bidi:isolate}",
-                "main{margin:1em}",
-                "table{border-collapse:collapse;width:100%}",
-                "th,td{border:1px solid #ddd;padding:8px}",
-                "th{background:#f3f3f3;text-align:left}",
-                "td.v{text-align:right;font-variant-numeric:tabular-nums}",
-                "tr:nth-child(even){background:#f2f2f2}",
-                "#last{color:#555;font-size:13px;margin:.75em 0}",
-                "#meta{color:#555;font-size:13px;margin:.5em 0}",
-                "#status{color:#888;font-size:13px;margin:.6em 0}",
+                "<title>Calliope mini Hub</title><style>",
+                // Look follows the Calliope UI kit (storybook.calliope.cc, recipe
+                // "IoT-Dashboard"): ink text, mist hairlines, 8 px radii, dark
+                // control tiles, pill buttons. No web fonts -- the hub has no
+                // internet -- so Roboto is used only when installed.
+                ":root{--ink:#1b1c1d;--mut:#1b1c1db3;--mist:#e8edeb;--teal:#42c8c8;--tealD:#1d8286;--cond:\"Roboto Condensed\",\"Arial Narrow\",\"Roboto\",system-ui,sans-serif}",
+                "*{box-sizing:border-box}",
+                "body{font-family:\"Roboto\",system-ui,\"Segoe UI\",Helvetica,Arial,sans-serif;margin:0;color:var(--ink);background:#fff;line-height:1.4}",
+                ".header-strip{height:6px;background:var(--teal)}",
+                // One column, as wide as the old feed table, centred.
+                ".wrap{max-width:60rem;margin:0 auto;padding:1.5rem 1rem 2rem;display:flex;flex-direction:column;gap:1rem}",
+                "h1{font-family:var(--cond);font-size:1.5rem;font-weight:600;line-height:1.2;text-transform:uppercase;letter-spacing:.04em;margin:0 0 .25rem}",
+                "h2{font-family:var(--cond);font-size:1.125rem;font-weight:600;line-height:1.2;text-transform:uppercase;letter-spacing:.04em;margin:0 0 .75rem}",
+                ".card{border:1px solid var(--mist);border-radius:8px;background:#fff;padding:1rem;min-width:0}",
+                // Steuerung: switches side by side, sliders side by side.
+                ".grid{display:grid;gap:.75rem;grid-template-columns:repeat(3,minmax(0,1fr))}",
+                "@media(max-width:36rem){.grid{grid-template-columns:1fr}}",
+                ".w{position:relative;background:var(--ink);color:#fff;border-radius:8px;padding:.85rem 1rem;display:flex;flex-direction:column;gap:.6rem;min-width:0}",
+                ".hd{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}",
+                ".lbl{font-family:var(--cond);font-weight:600;font-size:1rem}",
+                ".val{font-size:1.5rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}",
+                // Switch: the whole tile is the label, so a tap anywhere flips it.
+                ".sw{cursor:pointer;-webkit-tap-highlight-color:transparent}",
+                ".sw input{position:absolute;opacity:0;width:0;height:0}",
+                ".sw .st:after{content:\"AUS\"}",
+                ".sw input:checked~.hd .st:after{content:\"EIN\"}",
+                ".tr{position:relative;display:block;width:3rem;height:1.75rem;border:2px solid #fff9;border-radius:99px;transition:background-color .2s,border-color .2s}",
+                ".tr:after{content:\"\";position:absolute;top:50%;left:4px;width:16px;height:16px;border-radius:99px;background:#fff9;transform:translateY(-50%);transition:transform .2s,width .2s,height .2s,background-color .2s}",
+                ".sw input:checked~.tr{background:#fff;border-color:#fff}",
+                ".sw input:checked~.tr:after{background:var(--ink);width:20px;height:20px;transform:translate(18px,-50%)}",
+                ".sw input:focus-visible~.tr{outline:2px solid var(--teal);outline-offset:2px}",
+                // Slider in the UI-kit style: thin track, round white thumb.
+                ".w input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:1.75rem;margin:0;background:transparent;cursor:pointer}",
+                ".w input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:#fff9}",
+                ".w input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:#fff9}",
+                ".w input[type=range]::-moz-range-progress{height:4px;border-radius:99px;background:#fff}",
+                ".w input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-8px;border-radius:99px;background:#fff;border:0;box-shadow:0 0 0 2px var(--ink)}",
+                ".w input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:99px;background:#fff;border:0;box-shadow:0 0 0 2px var(--ink)}",
+                ".w input[type=range]:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:4px}",
+                // Feed table.
+                "table{border-collapse:collapse;width:100%;font-size:.875rem}",
+                "th,td{padding:.5rem 1rem .5rem 0;border-bottom:1px solid var(--mist);text-align:left}",
+                "th{color:var(--mut);font-weight:600;font-size:.8125rem;text-transform:uppercase;letter-spacing:.04em}",
+                "td.v{font-variant-numeric:tabular-nums;font-weight:600}",
+                "#meta{color:var(--mut);font-size:.875rem;margin:.5rem 0 0}",
+                "#status{color:var(--mut);font-size:.875rem;margin:.5rem 0 0}",
                 // The waiting state is what the user stares at, so make it
                 // readable and visibly alive. Three dots fade in turn, animated
                 // in CSS -- nothing is added to the 2 s poll and it keeps moving
@@ -1141,61 +1173,44 @@ namespace wifiHub {
                 // Opacity on three spans, NOT an animated content: property --
                 // animating content is not supported everywhere and would simply
                 // show no dots at all on the browsers that skip it.
-                "#status.wait{color:#5a7a10;font-size:16px;font-weight:700}",
+                "#status.wait{color:var(--tealD);font-size:1rem;font-weight:700}",
                 "#status .d{animation:b 1.2s infinite}",
                 "#status .d:nth-child(2){animation-delay:.2s}",
                 "#status .d:nth-child(3){animation-delay:.4s}",
                 "@keyframes b{0%,60%,100%{opacity:.2}30%{opacity:1}}",
-                "#full{display:none;color:#c00;font-weight:700;font-size:13px;margin:.3em 0}",
-                "#charts{display:flex;flex-wrap:wrap;gap:1em;margin-top:1em}",
-                ".chart{border:1px solid #eee;border-radius:6px;width:420px;max-width:100%}",
-                "button{cursor:pointer;border-radius:23px;min-height:40px;font-weight:700;font-size:14px;padding:0 18px;border:none;background:#bbef53;color:#233;margin:.5em 0}",
-                "button:disabled{background:#ddd;color:#999;cursor:default}",
-                ".top{display:flex;flex-wrap:wrap;gap:1em;align-items:flex-start}",
-                ".card{border:1px solid #ddd;border-radius:8px;padding:.6em 1em .9em;background:#fafafa}",
-                ".tablebox{flex:1 1 320px;min-width:280px;max-width:100%}",
-                ".tablebox table{margin-top:.3em}",
-                ".dlrow{display:flex;justify-content:flex-end}",
-                "#ctrls{flex:0 0 auto;width:280px;max-width:100%}",
-                "#ctrls h2{font-size:15px;margin:.4em 0;color:#4a5261}",
-                "#ctrls .row{display:flex;align-items:center;gap:.6em;margin:.7em 0}",
-                "#ctrls .lbl{width:5em}",
-                "#ctrls input[type=range]{flex:1;min-width:90px}",
-                "#ctrls .val{width:2.5em;text-align:right;font-variant-numeric:tabular-nums}",
-                ".switch{position:relative;display:inline-block;width:64px;height:28px;flex:none}",
-                ".switch input{opacity:0;width:0;height:0}",
-                ".switch .slider{position:absolute;inset:0;cursor:pointer;background:#bbb;border-radius:28px;transition:.2s}",
-                ".switch .slider:before{content:\"\";position:absolute;height:22px;width:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}",
-                ".switch .slider:after{content:\"AUS\";position:absolute;right:7px;top:7px;font-size:10px;font-weight:700;color:#fff}",
-                ".switch input:checked + .slider{background:#bbef53}",
-                ".switch input:checked + .slider:before{transform:translateX(36px)}",
-                ".switch input:checked + .slider:after{content:\"EIN\";left:8px;right:auto}",
-                "footer{margin:1em;color:#888;font-size:13px}",
+                "#full{display:none;color:#e53f4b;font-weight:700;font-size:.875rem;margin:.5rem 0 0}",
+                ".dlrow{display:flex;justify-content:flex-end;margin-top:1rem}",
+                // Pill button, UI-kit "secondary".
+                "button{cursor:pointer;height:2.25rem;padding:0 1rem;border:2px solid var(--ink);border-radius:99px;background:transparent;color:var(--ink);font-family:var(--cond);font-size:.875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}",
+                "button:hover{background:#1b1c1d14}",
+                "button:disabled{opacity:.4;cursor:default;background:transparent}",
+                "#charts{display:flex;flex-direction:column;gap:1rem}",
+                ".chart{border:1px solid var(--mist);border-radius:8px;padding:.75rem 1rem 1rem;min-width:0}",
+                // Chart title as its own heading above the plot, not inside the SVG.
+                ".ct{font-family:var(--cond);font-size:1.125rem;font-weight:600;line-height:1.2;margin:0 0 .75rem;padding-bottom:.5rem;border-bottom:1px solid var(--mist)}",
+                "footer{color:var(--mut);font-size:.8125rem;text-align:center}",
                 "</style></head><body>",
-                "<header><div class=\"header-strip\"></div>",
-                "<div class=\"header-contents\"><h1>Calliope mini Hub Dashboard</h1></div></header>",
-                "<main><div class=\"top\">",
-                "<div class=\"tablebox card\">",
+                "<header><div class=\"header-strip\"></div></header>",
+                "<main class=\"wrap\"><h1>Calliope mini Hub</h1>",
+                "<section id=\"ctrls\" class=\"card\"><h2>Steuerung</h2><div class=\"grid\">",
+                "<label class=\"w sw\"><input type=\"checkbox\" id=\"tA\"><span class=\"hd\"><span class=\"lbl\">Schalter A</span><span class=\"val st\"></span></span><span class=\"tr\"></span></label>",
+                "<label class=\"w sw\"><input type=\"checkbox\" id=\"tB\"><span class=\"hd\"><span class=\"lbl\">Schalter B</span><span class=\"val st\"></span></span><span class=\"tr\"></span></label>",
+                "<label class=\"w sw\"><input type=\"checkbox\" id=\"tC\"><span class=\"hd\"><span class=\"lbl\">Schalter C</span><span class=\"val st\"></span></span><span class=\"tr\"></span></label>",
+                "<div class=\"w\"><div class=\"hd\"><label class=\"lbl\" for=\"sA\">Regler A</label><span id=\"sAv\" class=\"val\">0</span></div><input type=\"range\" min=\"0\" max=\"100\" value=\"0\" id=\"sA\"></div>",
+                "<div class=\"w\"><div class=\"hd\"><label class=\"lbl\" for=\"sB\">Regler B</label><span id=\"sBv\" class=\"val\">0</span></div><input type=\"range\" min=\"0\" max=\"100\" value=\"0\" id=\"sB\"></div>",
+                "<div class=\"w\"><div class=\"hd\"><label class=\"lbl\" for=\"sC\">Regler C</label><span id=\"sCv\" class=\"val\">0</span></div><input type=\"range\" min=\"0\" max=\"100\" value=\"0\" id=\"sC\"></div>",
+                "</div></section>",
+                "<section class=\"card\"><h2>Feeds</h2>",
                 "<table id=\"t\"><tr><th>Sensor</th><th>Wert</th></tr></table>",
                 "<div id=\"meta\">Empfangene Pakete: <span id=\"pkts\">0</span></div>",
-                "<div id=\"last\">Letzte Aktualisierung: nie</div>",
                 "<div id=\"full\">Log voll!</div>",
                 // The waiting indicator lives here, where the eye already is --
                 // next to the values -- rather than far below the charts.
                 "<div id=\"status\" class=\"wait\">warte auf Daten<span class=\"d\">.</span><span class=\"d\">.</span><span class=\"d\">.</span></div>",
-                // Button right-aligned inside the card.
                 "<div class=\"dlrow\"><button id=\"dl\" onclick=\"dlCsv()\">Als CSV herunterladen</button></div>",
-                "</div>",
-                "<section id=\"ctrls\" class=\"card\"><h2>Steuerung</h2>",
-                "<div class=\"row\"><span class=\"lbl\">Schalter A</span><label class=\"switch\"><input type=\"checkbox\" id=\"tA\"><span class=\"slider\"></span></label></div>",
-                "<div class=\"row\"><span class=\"lbl\">Schalter B</span><label class=\"switch\"><input type=\"checkbox\" id=\"tB\"><span class=\"slider\"></span></label></div>",
-                "<div class=\"row\"><span class=\"lbl\">Schalter C</span><label class=\"switch\"><input type=\"checkbox\" id=\"tC\"><span class=\"slider\"></span></label></div>",
-                "<div class=\"row\"><span class=\"lbl\">Regler A</span><input type=\"range\" min=\"0\" max=\"100\" value=\"0\" id=\"sA\"><span id=\"sAv\" class=\"val\">0</span></div>",
-                "<div class=\"row\"><span class=\"lbl\">Regler B</span><input type=\"range\" min=\"0\" max=\"100\" value=\"0\" id=\"sB\"><span id=\"sBv\" class=\"val\">0</span></div>",
-                "<div class=\"row\"><span class=\"lbl\">Regler C</span><input type=\"range\" min=\"0\" max=\"100\" value=\"0\" id=\"sC\"><span id=\"sCv\" class=\"val\">0</span></div>",
-                "</section></div>",
-                "<div id=\"charts\"></div></main>",
-                "<footer>Aktualisiert sich alle 2&nbsp;s &middot; live vom WiFi-Modul</footer>",
+                "</section>",
+                "<section class=\"card\"><h2>Dashboard</h2><div id=\"charts\"></div></section>",
+                "<footer><span id=\"last\">Letzte Aktualisierung: nie</span> &middot; aktualisiert sich alle 2&nbsp;s &middot; live vom WiFi-Modul</footer></main>",
                 "<script>",
                 "var s=document.getElementById('status'),tbl=document.getElementById('t'),",
                 "lu=document.getElementById('last'),charts=document.getElementById('charts'),",
@@ -1260,9 +1275,8 @@ namespace wifiHub {
                 "setTimeout(function(){if(B){B.disabled=false;B.textContent='Als CSV herunterladen';}downloading=false;},wait);",
                 "}}",
                 "function svg(title,a){",
-                "var W=420,H=200,pl=46,pr=10,pt=20,pb=22,gw=W-pl-pr,gh=H-pt-pb,i,j;",
-                "var s='<svg viewBox=\"0 0 '+W+' '+H+'\" width=\"100%\" style=\"display:block\">';",
-                "s+='<text x=\"'+pl+'\" y=\"13\" fill=\"#4a5261\" font-family=\"sans-serif\" font-size=\"12\" font-weight=\"bold\">'+title+'</text>';",
+                "var W=640,H=260,pl=48,pr=12,pt=10,pb=24,gw=W-pl-pr,gh=H-pt-pb,i,j;",
+                "var s='<h3 class=\"ct\">'+title+'</h3><svg viewBox=\"0 0 '+W+' '+H+'\" width=\"100%\" style=\"display:block\">';",
                 "if(a.length<2)return s+'<text x=\"'+pl+'\" y=\"'+(H/2)+'\" fill=\"#aaa\" font-family=\"sans-serif\" font-size=\"11\">sammle Daten...</text></svg>';",
                 "var mn=Math.min.apply(null,a),mx=Math.max.apply(null,a);if(mn==mx){mn-=1;mx+=1;}",
                 "function yf(v){return (pt+gh-((v-mn)/(mx-mn))*gh).toFixed(1);}",
@@ -1271,12 +1285,12 @@ namespace wifiHub {
                 "var yl=[mx,(mx+mn)/2,mn];",
                 "for(j=0;j<3;j++){var yy=yf(yl[j]);",
                 "s+='<line x1=\"'+pl+'\" y1=\"'+yy+'\" x2=\"'+(pl+gw)+'\" y2=\"'+yy+'\" stroke=\"#eee\"/>';",
-                "s+='<text x=\"2\" y=\"'+(+yy+3)+'\" fill=\"#888\" font-family=\"sans-serif\" font-size=\"10\">'+yl[j].toFixed(1)+'</text>';}",
+                "s+='<text x=\"2\" y=\"'+(+yy+3)+'\" fill=\"#888\" font-family=\"sans-serif\" font-size=\"11\">'+yl[j].toFixed(1)+'</text>';}",
                 "var p='';for(i=0;i<a.length;i++)p+=xf(i)+','+yf(a[i])+' ';",
                 "s+='<polyline fill=\"none\" stroke=\"#8bc220\" stroke-width=\"2\" points=\"'+p+'\"/>';",
                 "var tk=4;for(i=0;i<=tk;i++){var f=i/tk,xx=(pl+f*gw).toFixed(1),ago=Math.round((1-f)*(a.length-1)*2);",
                 "s+='<line x1=\"'+xx+'\" y1=\"'+(pt+gh)+'\" x2=\"'+xx+'\" y2=\"'+(pt+gh+3)+'\" stroke=\"#ccc\"/>';",
-                "s+='<text x=\"'+xx+'\" y=\"'+(H-6)+'\" fill=\"#888\" font-family=\"sans-serif\" font-size=\"9\" text-anchor=\"'+(i==0?'start':i==tk?'end':'middle')+'\">'+(ago?'-'+ago+'s':'jetzt')+'</text>';}",
+                "s+='<text x=\"'+xx+'\" y=\"'+(H-6)+'\" fill=\"#888\" font-family=\"sans-serif\" font-size=\"11\" text-anchor=\"'+(i==0?'start':i==tk?'end':'middle')+'\">'+(ago?'-'+ago+'s':'jetzt')+'</text>';}",
                 "return s+'</svg>';}",
                 // Multi-series chart: one labelled, coloured line per node.
                 "function svgM(title,series,winLen){",
@@ -1284,9 +1298,8 @@ namespace wifiHub {
                 // underneath it. At pt=22 the two sat 8 px apart and read as one
                 // block; 32 separates them clearly. H grows to match so the plot
                 // area itself is unchanged.
-                "var W=420,H=220,pl=46,pr=10,pt=32,pb=22,gw=W-pl-pr,gh=H-pt-pb,i,k;",
-                "var o='<svg viewBox=\"0 0 '+W+' '+H+'\" width=\"100%\" style=\"display:block\">';",
-                "o+='<text x=\"'+pl+'\" y=\"13\" fill=\"#4a5261\" font-family=\"sans-serif\" font-size=\"12\" font-weight=\"bold\">'+title+'</text>';",
+                "var W=640,H=280,pl=48,pr=12,pt=28,pb=24,gw=W-pl-pr,gh=H-pt-pb,i,k;",
+                "var o='<h3 class=\"ct\">'+title+'</h3><svg viewBox=\"0 0 '+W+' '+H+'\" width=\"100%\" style=\"display:block\">';",
                 "var all=[];for(k=0;k<series.length;k++)for(i=0;i<series[k].v.length;i++)all.push(series[k].v[i]);",
                 "if(all.length<2)return o+'<text x=\"'+pl+'\" y=\"'+(H/2)+'\" fill=\"#aaa\" font-family=\"sans-serif\" font-size=\"11\">sammle Daten...</text></svg>';",
                 "var mn=Math.min.apply(null,all),mx=Math.max.apply(null,all);if(mn==mx){mn-=1;mx+=1;}",
@@ -1298,16 +1311,16 @@ namespace wifiHub {
                 "var yl=[mx,(mx+mn)/2,mn];",
                 "for(i=0;i<3;i++){var yy=yf(yl[i]);",
                 "o+='<line x1=\"'+pl+'\" y1=\"'+yy+'\" x2=\"'+(pl+gw)+'\" y2=\"'+yy+'\" stroke=\"#eee\"/>';",
-                "o+='<text x=\"2\" y=\"'+(+yy+3)+'\" fill=\"#888\" font-family=\"sans-serif\" font-size=\"10\">'+yl[i].toFixed(1)+'</text>';}",
+                "o+='<text x=\"2\" y=\"'+(+yy+3)+'\" fill=\"#888\" font-family=\"sans-serif\" font-size=\"11\">'+yl[i].toFixed(1)+'</text>';}",
                 "for(k=0;k<series.length;k++){var a=series[k].v,ax=series[k].x,p='';for(i=0;i<a.length;i++)p+=xf(ax[i])+','+yf(a[i])+' ';",
                 "o+='<polyline fill=\"none\" stroke=\"'+series[k].c+'\" stroke-width=\"2\" points=\"'+p+'\"/>';}",
                 "var tk=4;for(i=0;i<=tk;i++){var f=i/tk,xx=(pl+f*gw).toFixed(1),ago=Math.round((1-f)*(winLen-1)*2);",
                 "o+='<line x1=\"'+xx+'\" y1=\"'+(pt+gh)+'\" x2=\"'+xx+'\" y2=\"'+(pt+gh+3)+'\" stroke=\"#ccc\"/>';",
-                "o+='<text x=\"'+xx+'\" y=\"'+(H-6)+'\" fill=\"#888\" font-family=\"sans-serif\" font-size=\"9\" text-anchor=\"'+(i==0?'start':i==tk?'end':'middle')+'\">'+(ago?'-'+ago+'s':'jetzt')+'</text>';}",
+                "o+='<text x=\"'+xx+'\" y=\"'+(H-6)+'\" fill=\"#888\" font-family=\"sans-serif\" font-size=\"11\" text-anchor=\"'+(i==0?'start':i==tk?'end':'middle')+'\">'+(ago?'-'+ago+'s':'jetzt')+'</text>';}",
                 "var lx=pl+4;for(k=0;k<series.length;k++){",
-                "o+='<rect x=\"'+lx+'\" y=\"'+(pt-11)+'\" width=\"9\" height=\"9\" fill=\"'+series[k].c+'\"/>';",
-                "o+='<text x=\"'+(lx+12)+'\" y=\"'+(pt-3)+'\" fill=\"#555\" font-family=\"sans-serif\" font-size=\"10\">'+series[k].n+'</text>';",
-                "lx+=22+series[k].n.length*6;}",
+                "o+='<rect x=\"'+lx+'\" y=\"'+(pt-21)+'\" width=\"10\" height=\"10\" fill=\"'+series[k].c+'\"/>';",
+                "o+='<text x=\"'+(lx+14)+'\" y=\"'+(pt-12)+'\" fill=\"#555\" font-family=\"sans-serif\" font-size=\"12\">'+series[k].n+'</text>';",
+                "lx+=28+series[k].n.length*7;}",
                 "return o+'</svg>';}",
                 // Render the Node x sensors table and one per-sensor chart (a line
                 // per node) from the buffered rows. Used when nodeIx>=0.

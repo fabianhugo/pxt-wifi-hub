@@ -1,18 +1,18 @@
 {
-  "wifiHub.joinHub": "Mit dem WiFi-Netzwerk des Hubs verbinden. Netzwerkname und Passwort wie bei \"starte Hub\". Unter dem Namen dieses Minis erscheint er im Dashboard; jeder Mini braucht einen eigenen. Danach mit \"mit Hub verbunden?\" prüfen.",
+  "wifiHub.joinHub": "Mit dem WiFi-Netzwerk des Hubs verbinden. SSID und Passwort wie bei \"starte Hub\". Der Mini erscheint im Dashboard unter seinem Gerätenamen. Danach mit \"mit Hub verbunden?\" prüfen.",
   "wifiHub.joinedHub": "Wahr, wenn dieser Mini mit dem Netzwerk des Hubs verbunden ist.",
   "wifiHub.liveAddress": "Die Adresse, die im Browser geöffnet wird, z. B. \"10.0.0.1\".",
   "wifiHub.liveHubOK": "Wahr, wenn das WiFi-Netzwerk läuft und der Hub das Dashboard ausliefert.",
-  "wifiHub.logHubValues": "Speichert die eigenen Werte des Hub-Minis. Sie erscheinen im Dashboard wie die eines anderen Minis, unter dem Hub-Namen (\"hub\", außer mit \"setze Hub-Name\" geändert), und landen mit im Flash-Speicher. Gleiche Namen wie bei den anderen Minis verwenden, dann teilen sie sich ein Diagramm.",
+  "wifiHub.logHubValues": "Speichert die eigenen Werte des Hub-Minis. Sie erscheinen im Dashboard wie die eines anderen Minis, unter dem Hub-Namen (Gerätename mit \" (hub)\", außer mit \"setze Hub-Name\" geändert), und landen mit im Flash-Speicher. Gleiche Namen wie bei den anderen Minis verwenden, dann teilen sie sich ein Diagramm.",
   "wifiHub.nodeCount": "Wie viele verschiedene Minis schon Werte gesendet haben.",
   "wifiHub.onDebugMessage": "Führt Code für jede Debug-Zeile aus (AT-Befehle und Statusmeldungen), zur Fehlersuche. Ohne diesen Block wird kein Debug-Text erzeugt.\n* Die Zeile NICHT auf die eingebaute serielle Schnittstelle schreiben: die ist mit dem WiFi-Modul verbunden. Stattdessen eine zweite UART nutzen, z. B. die Erweiterung extra-serial an den USB-Pins.",
   "wifiHub.pushStatus": "Wie weit das letzte Senden kam: 0 = ok, 1 = keine Verbindung zum Hub, 2 = keine Sendebereitschaft, 3 = nicht bestätigt.",
-  "wifiHub.readingsCount": "Anzahl der empfangenen Werte seit dem Start des Hubs.",
-  "wifiHub.sendValues": "Sendet die aktuellen Werte dieses Minis an den Hub, unter dem Namen aus \"verbinde mit Hub\". Das Dashboard zeigt immer die neuesten Werte. \"Status des letzten Sendens\" sagt, ob sie angekommen sind.",
-  "wifiHub.setHubName": "Name der eigenen Zeile des Hub-Minis im Dashboard und im Speicher (Standard \"hub\"). Nützlich, wenn ein anderer Mini schon so heißt.",
+  "wifiHub.readingsCount": "Anzahl der empfangenen Zahlen seit dem Start des Hubs.",
+  "wifiHub.sendValues": "Sendet die aktuellen Zahlen dieses Minis an den Hub, unter seinem Gerätenamen. Das Dashboard zeigt immer die neuesten Zahlen. \"Status des letzten Sendens\" sagt, ob sie angekommen sind.",
+  "wifiHub.setHubName": "Name der eigenen Zeile des Hub-Minis im Dashboard und im Speicher (Standard: Gerätename mit \" (hub)\", z. B. \"zutip (hub)\").",
   "wifiHub.setLinkSpeed": "Beschleunigt die Verbindung zum WiFi-Modul (Standard 115200).\n* Das Dashboard ist etwa 13 KB groß, bei 115200 Baud dauert allein die Übertragung etwa 1,2 s. 230400 halbiert das.\n* Gefahrlos: Das Modul merkt sich die Rate nicht dauerhaft; nach dem Ausstecken gilt wieder 115200. Klappt die neue Rate nicht, schaltet der Block selbst zurück.\n* VOR \"starte Hub\" oder \"verbinde mit Hub\" aufrufen.",
   "wifiHub.setTxPower": "Verringert die WiFi-Sendeleistung, in dBm. Bereich 10 bis 20; Standard des Moduls ist 20.\n* Hilft, wenn das Modul neu startet, beim Kaltstart hängt oder unter Last die Verbindung verliert. Der Anschluss des Calliope liefert etwa 200 mA, bei 20 dBm braucht das Modul aber rund 335 mA.\n* 13 dBm bleibt im Budget und reicht noch für ein Klassenzimmer. Weniger Leistung heißt weniger Reichweite.",
   "wifiHub.startHub": "Startet den Hub: öffnet das WiFi-Netzwerk für die anderen Minis, speichert, was sie senden, und liefert das Dashboard aus. Jeder neue Wertname wird eine neue Spalte.",
-  "wifiHub.webSlider": "Wert eines Schiebereglers im Dashboard, 0 bis 100. Funktioniert auf dem Hub und auf jedem Mini (ein Mini bekommt ihn bei jedem \"sende Werte\").",
-  "wifiHub.webToggle": "Zustand eines Schalters im Dashboard (an = wahr).\n* Funktioniert auf dem Hub und auf jedem Mini. Ein Mini bekommt die Schalter bei jedem \"sende Werte\", sieht Änderungen also in seinem Sende-Takt."
+  "wifiHub.webSlider": "Wert eines Schiebereglers im Dashboard, 0 bis 100. Funktioniert auf dem Hub und auf jedem Mini (ein Mini bekommt ihn bei jedem \"sende Zahlen\").",
+  "wifiHub.webToggle": "Zustand eines Schalters im Dashboard (an = wahr).\n* Funktioniert auf dem Hub und auf jedem Mini. Ein Mini bekommt die Schalter bei jedem \"sende Zahlen\", sieht Änderungen also in seinem Sende-Takt."
 }

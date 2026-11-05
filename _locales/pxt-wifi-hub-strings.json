@@ -2,7 +2,7 @@
   "LiveControl.A|block": "A",
   "LiveControl.B|block": "B",
   "LiveControl.C|block": "C",
-  "wifiHub.joinHub|block": "join hub|network name %name|password %pass|node name %nodeName||TX %tx|RX %rx",
+  "wifiHub.joinHub|block": "join hub|network name %name|password %pass||TX %tx|RX %rx",
   "wifiHub.joinedHub|block": "joined hub?",
   "wifiHub.liveAddress|block": "live page address",
   "wifiHub.liveHubOK|block": "live hub OK?",

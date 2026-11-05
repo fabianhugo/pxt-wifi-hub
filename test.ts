@@ -46,7 +46,7 @@ function runHub() {
         basic.pause(200)
     })
 
-    // The hub's own readings, every 2 s, shown on the page as "hub".
+    // The hub's own readings, every 2 s, shown on the page as "<device name> (hub)".
     basic.forever(function () {
         wifiHub.logHubValues(
             datalogger.createCV("Temperatur", input.temperature()),
@@ -57,7 +57,7 @@ function runHub() {
 
 // ---- Node: join the hub and send values every 2 s ----
 function runNode() {
-    wifiHub.joinHub(NETWORK, PASSWORD, control.deviceName())
+    wifiHub.joinHub(NETWORK, PASSWORD)
     basic.showIcon(wifiHub.joinedHub() ? IconNames.Yes : IconNames.No)
 
     basic.forever(function () {
