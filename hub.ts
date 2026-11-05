@@ -43,7 +43,7 @@ enum LiveControl {
     C = 2
 }
 
-//% weight=9 color=#6476fd icon="" block="Hub"
+//% weight=9 color=#6476fd icon="" block="WiFi Hub"
 //% groups='["Hub", "Controls", "Node", "Status"]'
 namespace wifiHub {
 
